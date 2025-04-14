@@ -18,10 +18,10 @@
       <!-- 搜索框 -->
       <div class="search-box">
         <el-input
-          v-model="searchKeyword"
-          placeholder="搜索美食、餐厅、用户..."
-          clearable
-          @keyup.enter="handleSearch"
+            v-model="searchKeyword"
+            placeholder="搜索美食、餐厅、用户..."
+            clearable
+            @keyup.enter="handleSearch"
         >
           <template #prefix>
             <el-icon class="el-input__icon">
@@ -37,6 +37,18 @@
         <el-button type="primary" @click="handlePublish" v-if="isLoggedIn">
           发布
         </el-button>
+
+        <!-- 私信提醒 -->
+        <el-badge
+            :value="unreadCount"
+            :hidden="unreadCount === 0"
+            class="msg-badge"
+            v-if="isLoggedIn"
+        >
+          <el-button type="text" @click="goToMessages">
+            <el-icon><ChatDotRound /></el-icon>
+          </el-button>
+        </el-badge>
 
         <!-- 通知组件 -->
         <notification-popover v-if="isLoggedIn" />
@@ -74,9 +86,7 @@
         <!-- 登录注册按钮 -->
         <template v-else>
           <el-button @click="$router.push('/login')">登录</el-button>
-          <el-button type="primary" @click="$router.push('/register')">
-            注册
-          </el-button>
+          <el-button type="primary" @click="$router.push('/register')">注册</el-button>
         </template>
       </div>
     </div>
@@ -101,12 +111,14 @@
   </el-header>
 </template>
 
-<script>
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import NotificationPopover from './NotificationPopover.vue'
+import api from '@/services/api'
+
 import {
   Search,
   User,
@@ -115,10 +127,11 @@ import {
   SwitchButton,
   Document,
   Location,
-  Calendar
+  Calendar,
+  ChatDotRound
 } from '@element-plus/icons-vue'
 
-// 使用映射表减少冗余的 switch 逻辑
+// 路由映射（不包含 profile，profile 特别处理）
 const PUBLISH_ROUTES = {
   post: '/posts/create',
   restaurant: '/restaurants/create',
@@ -126,86 +139,87 @@ const PUBLISH_ROUTES = {
 }
 
 const COMMAND_ROUTES = {
-  profile: '/profile',
   settings: '/settings',
   admin: '/admin'
 }
 
-export default {
-  name: 'TheNavbar',
-  components: {
-    NotificationPopover,
-    Search,
-    User,
-    Setting,
-    Operation,
-    SwitchButton,
-    Document,
-    Location,
-    Calendar
-  },
-  setup() {
-    const store = useStore()
-    const router = useRouter()
-    const searchKeyword = ref('')
-    const publishDialog = ref({ visible: false })
+const store = useStore()
+const router = useRouter()
+const searchKeyword = ref('')
+const publishDialog = ref({ visible: false })
 
-    const isLoggedIn = computed(() => !!store.state.user)
-    const currentUser = computed(() => store.state.user || {})
-    const isAdmin = computed(() => currentUser.value?.role === 'ADMIN')
+const isLoggedIn = computed(() => !!store.state.user)
+const currentUser = computed(() => store.state.user || {})
+const isAdmin = computed(() => currentUser.value?.role === 'ADMIN')
 
-    const handleSearch = () => {
-      const keyword = searchKeyword.value.trim()
-      if (keyword) {
-        router.push({ path: '/search', query: { keyword } })
-      }
+const unreadCount = ref(0)
+
+const fetchUnreadCount = async () => {
+  try {
+    const { data } = await api.get('/messages/unread-count')
+    unreadCount.value = data
+  } catch (e) {
+    console.warn('未读消息获取失败', e)
+  }
+}
+
+const goToMessages = () => {
+  router.push('/chat-list')
+}
+
+onMounted(() => {
+  if (isLoggedIn.value) {
+    fetchUnreadCount()
+  }
+})
+
+watch(isLoggedIn, (val) => {
+  if (val) fetchUnreadCount()
+})
+
+const handleSearch = () => {
+  const keyword = searchKeyword.value.trim()
+  if (keyword) {
+    router.push({ path: '/search', query: { keyword } })
+  }
+}
+
+const handlePublish = () => {
+  if (!isLoggedIn.value) {
+    router.push('/login')
+  } else {
+    publishDialog.value.visible = true
+  }
+}
+
+const handlePublishOption = (type) => {
+  publishDialog.value.visible = false
+  const route = PUBLISH_ROUTES[type]
+  if (route) {
+    router.push(route)
+  }
+}
+
+const handleCommand = async (command) => {
+  if (command === 'logout') {
+    try {
+      await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      await store.dispatch('logout')
+      router.push('/login')
+    } catch {
+      // 用户取消操作
     }
-
-    const handlePublish = () => {
-      if (!isLoggedIn.value) {
-        router.push('/login')
-      } else {
-        publishDialog.value.visible = true
-      }
+  } else if (command === 'profile') {
+    const id = store.state.user?.id
+    if (id) {
+      router.push(`/profile/${id}`)
     }
-
-    const handlePublishOption = (type) => {
-      publishDialog.value.visible = false
-      const route = PUBLISH_ROUTES[type]
-      if (route) {
-        router.push(route)
-      }
-    }
-
-    const handleCommand = async (command) => {
-      if (command === 'logout') {
-        try {
-          await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-          })
-          await store.dispatch('logout')
-          router.push('/login')
-        } catch {
-          // 用户取消操作
-        }
-      } else if (COMMAND_ROUTES[command]) {
-        router.push(COMMAND_ROUTES[command])
-      }
-    }
-
-    return {
-      searchKeyword,
-      publishDialog,
-      isLoggedIn,
-      currentUser,
-      isAdmin,
-      handleSearch,
-      handlePublish,
-      handlePublishOption,
-      handleCommand
-    }
+  } else if (COMMAND_ROUTES[command]) {
+    router.push(COMMAND_ROUTES[command])
   }
 }
 </script>

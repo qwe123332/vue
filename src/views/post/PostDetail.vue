@@ -5,16 +5,19 @@
         <el-card v-if="post" class="post-content">
           <template #header>
             <div class="post-header">
-              <div class="author-info">
+              <router-link :to="`/profile/${post.userId}`" class="author-info">
                 <el-avatar size="small" :src="post.userAvatar" />
                 <div class="author-details">
                   <span class="author-name">{{ post.username }}</span>
                   <span class="post-time">{{ formatTime(post.createTime) }}</span>
                 </div>
-              </div>
+              </router-link>
               <div class="post-actions" v-if="canEdit">
                 <el-button  size="small" type="primary"  @click="editPost">编辑</el-button>
                 <el-button size="small" type="danger" @click="deletePost">删除</el-button>
+              </div>
+              <div class="post-actions" v-else>
+                <el-button type="danger" @click="openReportDialog">举报</el-button>
               </div>
             </div>
           </template>
@@ -107,6 +110,29 @@
       </el-col>
     </el-row>
   </div>
+
+  <el-dialog
+      title="举报帖子"
+      v-model="reportDialogVisible"
+      width="400px"
+  >
+    <el-form label-position="top">
+      <el-form-item label="举报原因">
+        <el-input
+            type="textarea"
+            v-model="reportReason"
+            :rows="4"
+            placeholder="请输入详细原因..."
+        />
+      </el-form-item>
+    </el-form>
+
+    <template #footer>
+      <el-button @click="reportDialogVisible = false">取消</el-button>
+      <el-button type="danger" @click="submitReport">提交举报</el-button>
+    </template>
+  </el-dialog>
+
 </template>
 
 <script>
@@ -121,6 +147,14 @@ import { Star } from "@element-plus/icons-vue";
 export default {
   name: "PostDetail",
   setup() {
+    const reportDialogVisible = ref(false);
+    const reportReason = ref('');
+    const reportReasons = [
+      "色情内容",
+      "恶意攻击",
+      "垃圾广告",
+      "其他",
+    ];
     const store = useStore();
     const route = useRoute();
     const router = useRouter();
@@ -215,6 +249,33 @@ export default {
     const handleReply = (comment) => {
       ElMessage.info(`回复评论：${comment.id}`);
     };
+    const openReportDialog = () => {
+      if (!store.state.user) {
+        router.push("/login");
+        return;
+      }
+      reportDialogVisible.value = true;
+    };
+    const submitReport = async () => {
+      try {
+        if (!reportReason.value.trim()) {
+          ElMessage.warning("请填写举报原因");
+          return;
+        }
+
+        await api.post("/posts/report", {
+          postId: post.value.id,
+          reason: reportReason.value
+        });
+
+        ElMessage.success("举报成功，感谢反馈！");
+        reportDialogVisible.value = false;
+        reportReason.value = '';
+      } catch (error) {
+        ElMessage.error("举报失败，请稍后重试");
+      }
+    };
+
 
     // 在组件 mounted 时并行加载帖子详情和评论
     onMounted(() => {
@@ -234,6 +295,10 @@ export default {
       editPost,
       formatTime,
       handleReply,
+      reportDialogVisible,
+      reportReason,
+      openReportDialog,
+      submitReport,
     };
   },
 };
@@ -272,6 +337,19 @@ export default {
   font-size: 24px;
   font-weight: bold;
 }
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.author-info:hover .author-name {
+  text-decoration: underline;
+}
+
 .post-image {
   width: 100%;
   height: 100%;

@@ -41,7 +41,8 @@
 
                         <el-form-item>
                             <el-button type="primary" @click="submitForm">发布</el-button>
-                            <el-button @click="cancel">取消</el-button>
+                          <el-button @click="saveDraft">保存草稿</el-button>
+                          <el-button @click="cancel">取消</el-button>
                         </el-form-item>
                     </el-form>
                 </el-card>
@@ -107,8 +108,20 @@ export default {
                 }
             }
         }
+      const saveDraft = async () => {
+        try {
+          await api.post('/posts/drafts', {
+            title: postForm.title,
+            content: postForm.content,
+            images: postForm.images
+          })
+          ElMessage.success('草稿保存成功')
+        } catch (e) {
+          ElMessage.error('草稿保存失败')
+        }
+      }
 
-        const handleUploadSuccess = (response) => {
+      const handleUploadSuccess = (response) => {
             postForm.images.push(response.url)
         }
 

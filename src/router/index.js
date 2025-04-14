@@ -37,12 +37,12 @@ const routes = [
     name: 'Register',
     component: Register
   },
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: Profile,
-    meta: { requiresAuth: true }
-  },
+  // {
+  //   path: '/profile',
+  //   name: 'Profile',
+  //   component: Profile,
+  //   meta: { requiresAuth: true }
+  // },
   {
     path: '/posts',
     name: 'PostList',
@@ -66,7 +66,28 @@ const routes = [
     meta: {
       title: '搜索结果'
     }
+  },
+  {
+    path: '/chat-list',
+    name: 'ChatList',
+    component: () => import('@/views/ChatList.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/chat/:userId',
+    name: 'ChatPage',
+    component: () => import('@/views/ChatPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile/:userId',
+    name: 'Profile',
+    component: () => import('@/views/user/Profile.vue'),
+    props: true
   }
+
+
+
 ]
 
 const router = createRouter({

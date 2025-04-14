@@ -107,19 +107,24 @@ export default createStore({
       const { data: unreadCount } = await api.get('/notifications/unread-count');
       commit('SET_UNREAD_COUNT', unreadCount);
     },
-    
+
     async register({ commit, dispatch }, credentials) {
       try {
-        const { data } = await api.post('/auth/register', {
+        await api.post('/auth/register', {
           username: credentials.username,
-          password: credentials.password
+          password: credentials.password,
+          email: credentials.email, // ✅ 关键补充
+            phone: credentials.phone_number // ✅ 关键补充
+
+
         });
-        
+
+
         // 设置token和过期时间
         localStorage.setItem('token', data.token);
         const expirationTime = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem('tokenExpiration', expirationTime);
-        
+
         // 确保用户数据被正确保存
         if (data.user) {
           commit('SET_USER', data.user);
