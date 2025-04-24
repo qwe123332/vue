@@ -71,8 +71,8 @@
             <el-table-column prop="createdTime" label="发布时间"></el-table-column>
             <el-table-column label="操作" width="180">
               <template #default="scope">
-                <el-button size="mini" type="success" @click="handleAuditPost(scope.row, true)">通过</el-button>
-                <el-button size="mini" type="danger" @click="handleAuditPost(scope.row, false)">拒绝</el-button>
+                <el-button size="small" type="success" @click="handleAuditPost(scope.row, true)">通过</el-button>
+                <el-button size="small" type="danger" @click="handleAuditPost(scope.row, false)">拒绝</el-button>
               </template>
             </el-table-column>
           </el-table>

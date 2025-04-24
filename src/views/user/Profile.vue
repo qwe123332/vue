@@ -202,7 +202,7 @@ const updateProfile = async () => {
       email: profileForm.value.email
     })
     ElMessage.success('更新成功')
-    fetchUserInfo()
+    await fetchUserInfo()
   } catch {
     ElMessage.error('更新失败')
   } finally {
@@ -238,7 +238,7 @@ const handleAvatarChange = async (event) => {
   try {
     await api.post('/users/avatar', formData)
     ElMessage.success('头像更新成功')
-    fetchUserInfo()
+    await fetchUserInfo()
   } catch {
     ElMessage.error('头像更新失败')
   }
@@ -466,18 +466,11 @@ watch(() => route.params.userId, () => {
     margin-bottom: 22px;
   }
 
-  .el-input__inner {
-    border-radius: 8px;
-    padding: 12px 15px;
-  }
 }
 
 /* 加载状态动画 */
-.skeleton-loader {
-  padding: 20px;
-}
 
-/* 空状态提示 */
+  /* 空状态提示 */
 .empty-state {
   padding: 40px 0;
   text-align: center;

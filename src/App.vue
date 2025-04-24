@@ -24,9 +24,6 @@ export default {
   
 }
 /* 全局样式文件，例如 src/assets/styles.css */
-.global-scroll {
-  overflow: scroll;
-}
 
 .main-content {
   margin-top: 60px;

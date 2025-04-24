@@ -504,17 +504,6 @@ onMounted(() => {
   object-fit: cover;
 }
 
-.moment-image.single-image {
-  grid-column: span 2;
-  max-width: 240px;
-  max-height: 360px;
-  aspect-ratio: auto;
-}
-
-.moment-image.four-images {
-  grid-column: span 1;
-}
-
 .item-location {
   display: flex;
   align-items: center;

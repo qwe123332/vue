@@ -130,7 +130,7 @@
           try {
             await store.dispatch('register', registerForm)
             ElMessage.success('注册成功')
-            router.push('/login')
+            await router.push('/login')
           } catch (error) {
             ElMessage.error(error.response?.data?.message || '注册失败')
           } finally {

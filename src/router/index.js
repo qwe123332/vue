@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import {ElMessage} from "element-plus";
 
 // 懒加载导入视图组件
 const Home = () => import('@/views/Home.vue')
@@ -84,7 +85,8 @@ const routes = [
     name: 'Profile',
     component: () => import('@/views/user/Profile.vue'),
     props: true
-  }
+  },
+
 
 
 
@@ -100,38 +102,29 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const userRole = localStorage.getItem('userRole')?.toUpperCase()
   const userData = localStorage.getItem('user')
-  
-  // 检查token过期
+
   const tokenExpiration = localStorage.getItem('tokenExpiration')
   const isTokenExpired = tokenExpiration && Date.now() > parseInt(tokenExpiration)
-  
+
+  // 1. token 过期处理
   if (isTokenExpired) {
-    // 清除过期信息
-    localStorage.removeItem('token')
-    localStorage.removeItem('userRole')
-    localStorage.removeItem('user')
-    localStorage.removeItem('tokenExpiration')
-    
-    // 如果要访问需要认证的页面，重定向到登录页
-    if (to.meta.requiresAuth) {
-      return next({ name: 'Login' })
-    }
+    localStorage.clear()
+    if (to.meta.requiresAuth) return next({ name: 'Login' })
   }
 
-  // 如果有token但没有用户数据，可能需要重新获取用户信息
-  if (token && !userData && to.meta.requiresAuth && to.name !== 'Login') {
-    // 可以选择重定向到登录页，或者触发一个获取用户信息的操作
-    // 这里简单处理为重定向到登录页
+  // 2. 需要认证但无 token
+  if (to.meta.requiresAuth && !token) {
     return next({ name: 'Login' })
   }
 
-  if (to.meta.requiresAuth && !token) {
-    next({ name: 'Login' })
-  } else if (to.meta.requiresAdmin && userRole !== 'ADMIN') {
-    next({ name: 'Home' })
-  } else {
-    next()
+  // 3. 拦截角色权限不足的访问
+  if (to.meta.roles && !to.meta.roles.includes(userRole)) {
+    ElMessage.warning('无权限访问该页面')
+    return next({ name: 'Home' }) // 或自定义 403 页面
   }
+
+  // 4. 正常通过
+  next()
 })
 
 export default router

@@ -209,17 +209,17 @@ const handleCommand = async (command) => {
         type: 'warning'
       })
       await store.dispatch('logout')
-      router.push('/login')
+      await router.push('/login')
     } catch {
       // 用户取消操作
     }
   } else if (command === 'profile') {
     const id = store.state.user?.id
     if (id) {
-      router.push(`/profile/${id}`)
+      await router.push(`/profile/${id}`)
     }
   } else if (COMMAND_ROUTES[command]) {
-    router.push(COMMAND_ROUTES[command])
+    await router.push(COMMAND_ROUTES[command])
   }
 }
 </script>
@@ -273,11 +273,6 @@ const handleCommand = async (command) => {
   color: #333;
   font-size: 16px;
   transition: color 0.2s;
-}
-
-.nav-link:hover,
-.nav-link.router-link-active {
-  color: #409EFF;
 }
 
 .search-box {

@@ -104,7 +104,7 @@ export default {
                     }
                 } catch (error) {
                     ElMessage.error('获取帖子数据失败')
-                    router.push('/posts')
+                    await router.push('/posts')
                 }
             }
         }
@@ -160,7 +160,7 @@ export default {
                             await api.post('/posts', postForm)
                             ElMessage.success('发布成功')
                         }
-                        router.push('/posts')
+                        await router.push('/posts')
                     } catch (error) {
                         ElMessage.error(isEdit.value ? '更新失败' : '发布失败')
                     }

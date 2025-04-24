@@ -141,10 +141,10 @@ export default {
       switch (notification.type) {
         case 'POST_COMMENT':
         case 'POST_LIKE':
-          router.push(`/posts/${notification.targetId}`)
+          await router.push(`/posts/${notification.targetId}`)
           break
         case 'USER_FOLLOW':
-          router.push(`/users/${notification.targetId}`)
+          await router.push(`/users/${notification.targetId}`)
           break
         default:
           console.warn('未知的通知类型:', notification.type)
@@ -202,9 +202,6 @@ export default {
 </script>
 
 <style scoped>
-.notification-badge {
-  cursor: pointer;
-}
 .notification-container {
   padding: 10px 0;
 }

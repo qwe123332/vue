@@ -5,17 +5,17 @@
       <el-form ref="loginFormRef" :model="loginForm" :rules="rules">
         <el-form-item prop="email">
           <el-input
-            v-model="loginForm.email"
-            placeholder="用户名"
-            prefix-icon="el-icon-user"
+              v-model="loginForm.email"
+              placeholder="用户名"
+              prefix-icon="el-icon-user"
           />
         </el-form-item>
         <el-form-item prop="password">
           <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="密码"
-            prefix-icon="el-icon-lock"
+              v-model="loginForm.password"
+              type="password"
+              placeholder="密码"
+              prefix-icon="el-icon-lock"
           />
         </el-form-item>
         <el-form-item>

@@ -146,6 +146,7 @@ import { Star } from "@element-plus/icons-vue";
 
 export default {
   name: "PostDetail",
+  components: {Star},
   setup() {
     const reportDialogVisible = ref(false);
     const reportReason = ref('');
@@ -181,7 +182,7 @@ export default {
         console.log(post.value);
       } catch (error) {
         ElMessage.error("获取帖子详情失败");
-        router.push("/posts");
+        await router.push("/posts");
       }
     };
 
