@@ -1,6 +1,6 @@
 <template>
   <div class="moments-list">
-    <!-- 顶部背景和用户头像区域 -->
+    <!-- 顶部背景和用户头像 -->
     <div class="moments-header">
       <div class="header-bg"></div>
       <div class="user-profile">
@@ -8,117 +8,102 @@
         <div class="profile-name">{{ userName }}</div>
       </div>
     </div>
-    
-    <!-- 帖子列表 -->
-    <div class="moments-content">
-      <!-- 骨架屏（loading状态） -->
-      <div v-if="loading" class="loading-container">
-        <el-skeleton
-          v-for="n in 2"
-          :key="n"
-          :rows="3"
-          animated
-          style="margin-bottom: 10px;"
-        />
+
+    <!-- 标签筛选栏 -->
+    <div class="tag-filter-bar">
+      <el-scrollbar>
+        <div class="tag-list">
+          <el-tag
+            :type="!route.query.tagId ? 'success' : 'info'"
+            class="tag-item"
+            @click="clearTagFilter"
+          >全部</el-tag>
+          <el-tag
+            v-for="tag in tagList"
+            :key="tag.id"
+            :type="tag.id == route.query.tagId ? 'success' : 'info'"
+            class="tag-item"
+            @click="selectTag(tag)"
+          >{{ tag.name }}</el-tag>
+        </div>
+      </el-scrollbar>
+    </div>
+
+    <!-- 当前筛选提示 -->
+    <template v-if="route.query.tagName">
+      <div class="tag-filter-banner">
+        当前筛选：
+        <el-tag type="success">{{ route.query.tagName }}</el-tag>
+        <el-button text size="small" @click="clearTagFilter">清除筛选</el-button>
       </div>
-      
-      <!-- 空数据提示 -->
+    </template>
+
+    <!-- 帖子列表主体 -->
+    <div class="moments-content">
+      <div v-if="loading" class="loading-container">
+        <el-skeleton v-for="n in 2" :key="n" :rows="3" animated style="margin-bottom: 10px;" />
+      </div>
       <el-empty v-else-if="posts.length === 0" description="暂无动态" />
-      
-      <!-- 动态列表 -->
+
       <div v-else class="moments-items">
-        <div 
-          v-for="post in posts" 
-          :key="post.id" 
-          class="moment-item"
-          @click="viewPost(post.id)"
-        >
-          <!-- 用户信息 -->
+        <div v-for="post in posts" :key="post.id" class="moment-item" @click="viewPost(post.id)">
           <div class="item-header">
-            <el-avatar :size="40" :src="post.avatar" />
+            <el-avatar :size="40" :src="post.userAvatar" />
             <div class="user-info">
               <div class="user-name">{{ post.username }}</div>
-              <div class="post-time">{{ formatTime(post.createdAt) }}</div>
+              <div class="post-time">{{ formatTime(post.createdTime) }}</div>
             </div>
           </div>
-
-          <!-- 标题 -->
           <h1>{{ post.title }}</h1>
-
-          <!-- 帖子内容 -->
           <div class="item-content">
-            <p class="content-text">{{ post.description }}</p>
-            <div class="posts-grid">
-            <!-- 图片展示 -->
-            <div v-if="post.images && post.images.length > 0" class="image-grid">
-              <el-image 
-                v-for="(img, index) in post.images.slice(0, 9)" 
+            <p class="content-text">{{ post.content }}</p>
+            <div v-if="post.images && post.images.length" class="image-grid">
+              <el-image
+                v-for="(img, index) in post.images.slice(0, 9)"
                 :key="index"
                 :src="img"
                 fit="cover"
                 class="moment-image"
                 :class="getImageClass(post.images.length)"
                 lazy
-                :preview-src-list="[]"
+                :preview-src-list="post.images"
               />
             </div>
-            </div>
           </div>
-          
-          <!-- 位置信息 -->
           <div v-if="post.location" class="item-location">
             <el-icon><Location /></el-icon>
             <span>{{ post.location }}</span>
           </div>
-          
-          <!-- 互动区域：点赞/评论 -->
           <div class="item-footer">
             <div class="interactions">
-              <el-button
-                text
-                :type="post.liked ? 'danger' : ''"
-                @click.stop="toggleLike(post)"
-              >
+              <el-button text :type="post.isLiked ? 'danger' : ''" @click.stop="toggleLike(post)">
                 <el-icon><Star /></el-icon>
                 <span>赞</span>
                 <span v-if="post.likeCount > 0" class="count">({{ formatCount(post.likeCount) }})</span>
               </el-button>
-              
-              <el-button
-                text
-                @click.stop="viewPost(post.id)"
-              >
+              <el-button text @click.stop="viewPost(post.id)">
                 <el-icon><ChatDotRound /></el-icon>
                 <span>评论</span>
                 <span v-if="post.commentCount > 0" class="count">({{ formatCount(post.commentCount) }})</span>
               </el-button>
             </div>
           </div>
-          
-          <!-- 点赞列表 -->
           <div v-if="post.likeCount > 0" class="likes-section">
             <el-icon class="like-icon"><Star /></el-icon>
             <div class="likes-list">{{ getLikesText(post) }}</div>
           </div>
-          
-          <!-- 评论预览 -->
           <div v-if="post.commentCount > 0" class="comments-preview">
-            <div
-              v-for="(comment, idx) in post.topComments || []"
-              :key="idx"
-              class="comment-item"
-            >
+            <div v-for="(comment, idx) in post.commentDTOs || []" :key="idx" class="comment-item">
               <span class="comment-user">{{ comment.username }}：</span>
               <span class="comment-content">{{ comment.content }}</span>
             </div>
-            <div v-if="post.commentCount > (post.topComments?.length || 0)" class="view-more">
+            <div v-if="post.commentCount > (post.commentDTOs?.length || 0)" class="view-more">
               查看全部{{ post.commentCount }}条评论
             </div>
           </div>
         </div>
       </div>
-      
-      <!-- 分页 -->
+
       <el-pagination
         v-if="total > pageSize"
         v-model:current-page="currentPage"
@@ -126,13 +111,12 @@
         :total="total"
         layout="prev, pager, next"
         @current-change="handlePageChange"
-        class="pagination"
         background
         hide-on-single-page
+        class="pagination"
       />
-      
-      <!-- 加载更多 -->
-      <div v-if="posts.length > 0 && !loading" class="load-more" @click="loadMore">
+
+      <div v-if="posts.length && !loading" class="load-more" @click="loadMore">
         {{ hasMore ? '点击加载更多' : '没有更多内容了' }}
       </div>
     </div>
@@ -140,247 +124,187 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { Star, ChatDotRound, Location } from '@element-plus/icons-vue';
-import api from '@/services/api';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import 'dayjs/locale/zh-cn';
+import { ref, computed, onMounted, watch } from 'vue'
+import { useStore } from 'vuex'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Star, ChatDotRound, Location } from '@element-plus/icons-vue'
+import api from '@/services/api'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/zh-cn'
 
-// dayjs配置
-dayjs.extend(relativeTime);
-dayjs.locale('zh-cn');
+// 初始化 dayjs
+dayjs.extend(relativeTime)
+dayjs.locale('zh-cn')
 
-// 组件状态
-const store = useStore();
-const router = useRouter();
-const posts = ref([]);
-const total = ref(0);
-const currentPage = ref(1);
-const pageSize = ref(10);
-const searchKeyword = ref('');
-const loading = ref(false);
-const isLoggedIn = computed(() => !!store.state.user);
-const postsCache = new Map(); // 缓存分页数据
+// 基础数据
+const store = useStore()
+const router = useRouter()
+const route = useRoute()
 
-// 是否还有更多
-const hasMore = computed(() => total.value > posts.value.length);
+const posts = ref([])
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const loading = ref(false)
+const postsCache = new Map()
+const tagList = ref([]) // ✅ 补上tagList
+const isLoggedIn = computed(() => !!store.state.user)
+const userAvatar = computed(() => store.state.user?.avatar || '')
+const userName = computed(() => store.state.user?.username || '游客')
 
-// 用户信息（假设从store获取）
-const userAvatar = computed(() => store.state.user?.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');
-const userName = computed(() => store.state.user?.username || '当前用户');
+// 缓存分页数据
+const hasMore = computed(() => total.value > posts.value.length)
+// ✅ 这里补上 selectTag 方法！
+const selectTag = (tag) => {
+  router.push({ path: '/posts', query: { tagId: tag.id, tagName: tag.name } })
+}
 
-/**
- * 获取帖子列表
- * @param {number} page - 当前页码
- * @param {boolean} append - 是否在列表尾部追加数据
- */
+// 拉取帖子列表
 const fetchPosts = async (page = 1, append = false) => {
-  loading.value = true;
-  const keyword = searchKeyword.value.trim();
-  const cacheKey = `${keyword}_${page}`;
-  
+  loading.value = true
+  const cacheKey = `${route.query.tagId || 'all'}_${page}`
+
   if (postsCache.has(cacheKey)) {
-    // 缓存命中
-    const cached = postsCache.get(cacheKey);
-    if (append) {
-      posts.value = [...posts.value, ...cached.posts];
-    } else {
-      posts.value = cached.posts;
-    }
-    total.value = cached.total;
-    loading.value = false;
-    return;
+    const cached = postsCache.get(cacheKey)
+    posts.value = append ? [...posts.value, ...cached.posts] : cached.posts
+    total.value = cached.total
+    loading.value = false
+    return
   }
-  
+
   try {
-    const { data } = await api.get('/posts', {
+    const data = await api.get('/posts', {
       params: {
         page: page - 1,
         size: pageSize.value,
-        keyword
-      },
-    });
-    // 模拟添加假的评论数据（实际应由后端提供）
-    const enhancedPosts = data.content.map((post) => ({
-      ...post,
-      topComments: post.commentCount > 0 ? generateFakeComments(Math.min(post.commentCount, 2)) : []
-    }));
+        tagId: route.query.tagId || undefined
+      }
+    })
+    const postList = data.records || []
+    total.value = data.total || 0
 
-    if (append) {
-      posts.value = [...posts.value, ...enhancedPosts];
-    } else {
-      posts.value = enhancedPosts;
-    }
-    
-    total.value = data.totalElements;
-    // 缓存
-    postsCache.set(cacheKey, {
-      posts: enhancedPosts,
-      total: data.totalElements
-    });
-  } catch (error) {
-    ElMessage.error('获取动态列表失败');
-    console.error('Error fetching posts:', error);
+    posts.value = append ? [...posts.value, ...postList] : postList
+    postsCache.set(cacheKey, { posts: postList, total: total.value })
+  } catch (err) {
+    ElMessage.error('获取动态失败')
+    console.error(err)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
-/**
- * 模拟生成假的评论数据
- */
-const generateFakeComments = (count) => {
-  const fakeUsers = ['小明', '小红', '小张', '小李', '小王', '小刘'];
-  const fakeContents = ['不错哦！', '支持一下', '很精彩', '学习了', '赞一个'];
-  
-  return Array(count).fill().map(() => ({
-    username: fakeUsers[Math.floor(Math.random() * fakeUsers.length)],
-    content: fakeContents[Math.floor(Math.random() * fakeContents.length)]
-  }));
-};
+// 拉取标签列表
+const fetchTags = async () => {
+  try {
+    const data = await api.get('/tags')
+    tagList.value = data
+    console.log('拉取到Tag列表:', data)
+  } catch (error) {
+    console.error('获取标签失败:', error)
+  }
+}
 
-/**
- * 分页切换
- */
+// // 清除标签筛选
+// const clearTagFilter = () => {
+//   router.push({ path: '/posts', query: { tagId: undefined, tagName: undefined } })
+// }
+
+
+// 监听tag变化刷新
+console.log('Tag ID:', route.query.tagId)
+watch(() => route.query.tagId, () => {
+  postsCache.clear()
+  posts.value = []
+  currentPage.value = 1
+  fetchPosts(1)
+})
+
+// 分页变化
 const handlePageChange = (page) => {
-  currentPage.value = page;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  fetchPosts(page);
-};
+  currentPage.value = page
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  fetchPosts(page)
+}
 
-/**
- * 加载更多
- */
+// 加载更多
 const loadMore = () => {
-  if (!hasMore.value || loading.value) return;
-  currentPage.value += 1;
-  fetchPosts(currentPage.value, true);
-};
+  if (loading.value || !hasMore.value) return
+  currentPage.value += 1
+  fetchPosts(currentPage.value, true)
+}
 
-/**
- * 搜索
- */
-const handleSearch = () => {
-  postsCache.clear();
-  currentPage.value = 1;
-  fetchPosts(1);
-};
-
-/**
- * 点赞/取消点赞
- */
+// 点赞
 const toggleLike = async (post) => {
   if (!isLoggedIn.value) {
-    ElMessage.warning('请先登录');
-    router.push('/login');
-    return;
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return
   }
-  
   try {
-    if (post.liked) {
-      await api.delete(`/posts/${post.id}/like`);
-      post.likeCount--;
+    if (post.isLiked) {
+      await api.delete(`/posts/${post.id}/like`)
+      post.likeCount--
     } else {
-      await api.post(`/posts/${post.id}/like`);
-      post.likeCount++;
+      await api.post(`/posts/${post.id}/like`)
+      post.likeCount++
     }
-    post.liked = !post.liked;
+    post.isLiked = !post.isLiked
   } catch (error) {
-    ElMessage.error('操作失败');
-    console.error('Error toggling like:', error);
+    ElMessage.error('操作失败')
   }
-};
+}
 
-/**
- * 查看帖子详情
- */
+// 进入帖子详情
 const viewPost = (id) => {
-  router.push(`/posts/${id}`);
-};
+  router.push(`/posts/${id}`)
+}
 
-/**
- * 时间格式化
- */
+// 清除标签筛选
+const clearTagFilter = () => {
+  router.push('/posts')
+}
+
+// 时间格式化
 const formatTime = (time) => {
-  if (!time) return '';
-  const date = dayjs(time);
-  
-  // 模仿朋友圈风格
-  if (date.isAfter(dayjs().subtract(1, 'minute'))) {
-    return '刚刚';
-  } else if (date.isAfter(dayjs().subtract(1, 'hour'))) {
-    return date.fromNow();
-  } else if (date.isAfter(dayjs().startOf('day'))) {
-    return date.format('HH:mm');
-  } else if (date.isAfter(dayjs().subtract(1, 'day').startOf('day'))) {
-    return '昨天 ' + date.format('HH:mm');
-  } else if (date.isAfter(dayjs().subtract(2, 'day').startOf('day'))) {
-    return '前天 ' + date.format('HH:mm');
-  } else if (date.isAfter(dayjs().startOf('year'))) {
-    return date.format('MM-DD HH:mm');
-  } else {
-    return date.format('YYYY-MM-DD HH:mm');
-  }
-};
+  if (!time) return ''
+  const date = dayjs(time)
+  if (date.isAfter(dayjs().subtract(1, 'minute'))) return '刚刚'
+  if (date.isAfter(dayjs().subtract(1, 'hour'))) return date.fromNow()
+  if (date.isAfter(dayjs().startOf('day'))) return date.format('HH:mm')
+  if (date.isAfter(dayjs().subtract(1, 'day').startOf('day'))) return '昨天 ' + date.format('HH:mm')
+  if (date.isAfter(dayjs().subtract(2, 'day').startOf('day'))) return '前天 ' + date.format('HH:mm')
+  if (date.isAfter(dayjs().startOf('year'))) return date.format('MM-DD HH:mm')
+  return date.format('YYYY-MM-DD HH:mm')
+}
 
-/**
- * 数字格式化
- */
+// 数字格式化
 const formatCount = (count) => {
-  if (count >= 10000) {
-    return (count / 10000).toFixed(1) + '万';
-  } else if (count >= 1000) {
-    return (count / 1000).toFixed(1) + '千';
-  }
-  return count;
-};
+  if (count >= 10000) return (count / 10000).toFixed(1) + '万'
+  if (count >= 1000) return (count / 1000).toFixed(1) + '千'
+  return count
+}
 
-/**
- * 获取图片样式类
- */
+// 图片展示样式
 const getImageClass = (count) => {
-  if (count === 1) return 'single-image';
-  if (count === 4) return 'four-images';
-  return '';
-};
+  if (count === 1) return 'single-image'
+  if (count === 4) return 'four-images'
+  return ''
+}
 
-/**
- * 获取点赞列表文本
- */
+// 点赞文本
 const getLikesText = (post) => {
-  // 实际应从后端获取用户列表
-  const fakeUsers = ['小明', '小红', '小张', '小李', '小王', '小刘'];
-  const likeUsers = [];
-  
-  // 如果当前用户已点赞，优先显示自己
-  if (post.liked && isLoggedIn.value) {
-    likeUsers.push(userName.value);
-  }
-  const remainingCount = post.likeCount - (post.liked ? 1 : 0);
+  if (!post.likeCount) return ''
+  return post.likeCount + '人点赞'
+}
 
-  // 填充一些假用户
-  for (let i = 0; i < Math.min(remainingCount, 5); i++) {
-    likeUsers.push(fakeUsers[i % fakeUsers.length]);
-  }
-  
-  // 如果总点赞数超过6人，用“等X人”结尾
-  if (post.likeCount > 6) {
-    likeUsers.push(`等${post.likeCount}人`);
-  }
-  
-  return likeUsers.join('、');
-};
-
-// 组件挂载
+// 页面挂载时加载
 onMounted(() => {
-  fetchPosts();
-});
+  fetchPosts()
+  fetchTags() 
+})
 </script>
-
 <style scoped>
 .moments-list {
   background-color: #f2f2f2;

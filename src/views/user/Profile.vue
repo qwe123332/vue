@@ -162,8 +162,10 @@ const rules = {
 
 const fetchUserInfo = async () => {
   try {
-    const { data } = await api.get(`/users/${viewedUserId.value}`)
+    const  data  = await api.get(`/users/${viewedUserId.value}`)
     userInfo.value = data
+    console.log('User info response:', data)
+    // 适配后端返回的数据结构
     if (isCurrentUser.value) {
       profileForm.value.username = data.username
       profileForm.value.bio = data.bio
@@ -176,12 +178,27 @@ const fetchUserInfo = async () => {
 
 const fetchUserPosts = async (page = 1) => {
   try {
-    const { data } = await api.get(`/posts/user/${viewedUserId.value}`, {
+    const data  = await api.get(`/posts/user/${viewedUserId.value}`, {
       params: { page: page - 1, size: pageSize.value }
     })
-    posts.value = data.content
-    total.value = data.totalElements
+    console.log('User posts response:', data)
+    
+    // 适配后端返回的数据结构
+    posts.value = data.records || []
+    total.value = data.total || 0
+    
+    // 如果返回的帖子没有图片，给予默认图片
+    posts.value.forEach(post => {
+      if (!post.images || post.images.length === 0) {
+        post.images = ['https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png']
+      }
+      // 确保创建时间字段一致
+      if (post.createdTime && !post.createTime) {
+        post.createTime = post.createdTime
+      }
+    })
   } catch (error) {
+    console.error('Error fetching user posts:', error)
     ElMessage.error('获取帖子失败')
   }
 }

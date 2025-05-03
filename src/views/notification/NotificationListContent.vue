@@ -2,12 +2,13 @@
   <div class="notification-list">
     <div v-loading="loading">
       <template v-if="notifications.length">
-        <div 
-          v-for="notification in notifications" 
-          :key="notification.id"
-          class="notification-item"
-          :class="{ unread: !notification.read }"
-          @click="$emit('notification-click', notification)"
+        <div
+            v-for="notification in notifications"
+            :key="notification.id"
+            class="notification-item"
+            :class="{ unread: !notification.read }"
+            @click="$emit('notification-click', notification)"
+            :aria-label="`Notification from ${notification.username || 'system'}`"
         >
           <div class="notification-icon">
             <el-icon :class="getNotificationIcon(notification.type)"></el-icon>
@@ -53,7 +54,13 @@ export default {
     }
 
     const formatTime = (time) => {
-      return dayjs(time).format('YYYY-MM-DD HH:mm')
+      const date = dayjs(time)
+      if (date.isAfter(dayjs().subtract(1, 'minute'))) return '刚刚'
+      if (date.isAfter(dayjs().subtract(1, 'hour'))) return date.fromNow()
+      if (date.isAfter(dayjs().startOf('day'))) return date.format('HH:mm')
+      if (date.isAfter(dayjs().subtract(1, 'day').startOf('day'))) return '昨天 ' + date.format('HH:mm')
+      if (date.isAfter(dayjs().subtract(2, 'day').startOf('day'))) return '前天 ' + date.format('HH:mm')
+      return date.format('YYYY-MM-DD HH:mm')
     }
 
     return {
@@ -110,4 +117,4 @@ export default {
   color: #999;
   padding: 40px 0;
 }
-</style> 
+</style>

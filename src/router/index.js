@@ -18,7 +18,11 @@ const routes = [
   },
   {
     path: '/restaurants',
-    component: () => import('@/views/Restaurants.vue') // 先创建一个占位组件
+    component: () => import('@/views/mall.vue') // 先创建一个占位组件
+  },
+  {
+    path: '/products/:id',
+    component: () => import('@/views/ProductDetail.vue') // 先创建一个占位组件
   },
   {
     path: '/activities',
@@ -53,6 +57,12 @@ const routes = [
     path: '/posts/:id',
     name: 'PostDetail',
     component: PostDetail
+  },
+  {
+    path:'/posts/:id/edit',
+    name:'EditPost',
+    component: () => import('@/views/PostEditor.vue'),
+   
   },
   {
     path: '/admin',

@@ -3,7 +3,7 @@
     <el-card>
       <div class="post-content">
         <div class="post-image" v-if="post.coverImage">
-          <img :src="post.coverImage" :alt="post.title">
+          <img :src="post.coverImage || '/path/to/default/image.jpg'" :alt="post.title" loading="lazy">
         </div>
         <div class="post-info">
           <h3 class="post-title">{{ post.title }}</h3>
@@ -14,9 +14,18 @@
               {{ post.author.username }}
             </span>
             <span class="stats">
-              <el-icon><View /></el-icon> {{ post.views }}
-              <el-icon><Star /></el-icon> {{ post.likes }}
-              <el-icon><ChatSquare /></el-icon> {{ post.comments }}
+              <el-tooltip content="Views" placement="top">
+                <el-icon><View /></el-icon>
+              </el-tooltip>
+              {{ post.views }}
+              <el-tooltip content="Likes" placement="top">
+                <el-icon><Star /></el-icon>
+              </el-tooltip>
+              {{ post.likes }}
+              <el-tooltip content="Comments" placement="top">
+                <el-icon><ChatSquare /></el-icon>
+              </el-tooltip>
+              {{ post.comments }}
             </span>
           </div>
         </div>
@@ -36,6 +45,10 @@ export default {
     post: {
       type: Object,
       required: true
+    },
+    excerptLength: {
+      type: Number,
+      default: 100
     }
   },
   setup(props) {

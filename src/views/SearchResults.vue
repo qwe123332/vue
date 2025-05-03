@@ -57,7 +57,7 @@ export default {
 
     const fetchSearchResults = async (page = 1) => {
       try {
-        const { data } = await api.get('/posts/search', {
+        const  data = await api.get('/posts/search', {
           params: {
             keyword: searchKeyword.value,
             page: page - 1,

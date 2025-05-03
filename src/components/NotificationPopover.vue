@@ -14,8 +14,8 @@
     <div class="notification-container">
       <div class="notification-header">
         <span>通知</span>
-        <el-button 
-          type="text" 
+        <el-button
+          type="text"
           size="small"
           @click="markAllAsRead"
           :disabled="!state.notifications.length"
@@ -26,8 +26,8 @@
 
       <el-scrollbar max-height="400px">
         <template v-if="state.notifications.length">
-          <div 
-            v-for="notification in state.notifications" 
+          <div
+            v-for="notification in state.notifications"
             :key="notification.id"
             class="notification-item"
             :class="{ unread: !notification.read }"
@@ -48,9 +48,9 @@
       </el-scrollbar>
 
       <div v-if="state.notifications.length" class="notification-footer">
-        <el-button 
-          type="text" 
-          size="small" 
+        <el-button
+          type="text"
+          size="small"
           @click="viewAllNotifications"
         >
           查看全部

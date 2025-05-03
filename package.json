@@ -15,6 +15,10 @@
     "element-plus": "^2.9.4",
     "fast-glob": "^3.3.3",
     "lodash-es": "^4.17.21",
+    "particles.vue3": "^2.12.0",
+    "reconnecting-websocket": "^4.4.0",
+    "tsparticles": "^3.8.1",
+    "tsparticles-slim": "^2.12.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "vuex": "^4.0.2"

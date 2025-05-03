@@ -6,11 +6,11 @@
           <template #header>
             <div class="card-header">
               <span class="title">我的通知</span>
-              <el-button 
-                type="primary" 
-                size="small"
-                @click="markAllAsRead"
-                :disabled="!hasUnread"
+              <el-button
+                  type="primary"
+                  size="small"
+                  @click="markAllAsRead"
+                  :disabled="!hasUnread || loading"
               >
                 全部标为已读
               </el-button>
@@ -20,16 +20,16 @@
           <el-tabs v-model="activeTab" @tab-click="handleTabChange">
             <el-tab-pane label="全部" name="all">
               <notification-list-content
-                v-if="!loading"
-                :notifications="visibleNotifications"
-                @notification-click="handleNotificationClick"
+                  v-if="!loading"
+                  :notifications="visibleNotifications"
+                  @notification-click="handleNotificationClick"
               />
             </el-tab-pane>
             <el-tab-pane label="未读" name="unread">
               <notification-list-content
-                v-if="!loading"
-                :notifications="visibleNotifications"
-                @notification-click="handleNotificationClick"
+                  v-if="!loading"
+                  :notifications="visibleNotifications"
+                  @notification-click="handleNotificationClick"
               />
             </el-tab-pane>
           </el-tabs>
@@ -39,14 +39,14 @@
           </div>
 
           <el-pagination
-            v-if="total > pageSize"
-            :current-page="currentPage"
-            :page-size="pageSize"
-            :total="total"
-            :pager-count="5"
-            layout="prev, pager, next"
-            @current-change="handlePageChange"
-            class="pagination"
+              v-if="total > pageSize"
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :total="total"
+              :pager-count="5"
+              layout="prev, pager, next"
+              @current-change="handlePageChange"
+              class="pagination"
           />
         </el-card>
       </el-col>
@@ -72,9 +72,9 @@ const total = ref(0)
 
 // 计算属性
 const visibleNotifications = computed(() => {
-  return activeTab.value === 'all' 
-    ? allNotifications.value 
-    : allNotifications.value.filter(n => !n.read)
+  return activeTab.value === 'all'
+      ? allNotifications.value
+      : allNotifications.value.filter(n => !n.read)
 })
 
 const hasUnread = computed(() => {
@@ -84,24 +84,25 @@ const hasUnread = computed(() => {
 // 获取通知数据
 const fetchNotifications = async (page = 1, tab = activeTab.value) => {
   if (loading.value) return
-  
+
   try {
     loading.value = true
     const params = {
       page: page - 1,
       size: pageSize.value
     }
-    
+
     if (tab === 'unread') {
       params.unreadOnly = true
     }
-    
-    const { data } = await api.get('/notifications', { params })
+
+    const  data  = await api.get('/notifications', { params })
     allNotifications.value = data.content || []
     total.value = data.totalElements || 0
     currentPage.value = page
   } catch (error) {
     console.error('获取通知失败', error)
+
     ElMessage.error('获取通知失败，请稍后重试')
   } finally {
     loading.value = false
@@ -110,8 +111,8 @@ const fetchNotifications = async (page = 1, tab = activeTab.value) => {
 
 // 标记所有通知为已读
 const markAllAsRead = async () => {
-  if (!hasUnread.value) return
-  
+  if (!hasUnread.value || loading.value) return
+
   try {
     await api.post('/notifications/read-all')
     allNotifications.value = allNotifications.value.map(notification => ({
@@ -223,17 +224,17 @@ onMounted(() => {
   .notification-page {
     padding: 10px;
   }
-  
+
   .notification-card {
     min-height: 400px;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .card-header .el-button {
     margin-left: 0;
     align-self: flex-end;

@@ -112,23 +112,23 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import {computed, onMounted, ref, watch} from 'vue'
+import {useStore} from 'vuex'
+import {useRouter} from 'vue-router'
+import {ElMessageBox} from 'element-plus'
 import NotificationPopover from './NotificationPopover.vue'
 import api from '@/services/api'
 
 import {
-  Search,
-  User,
-  Setting,
-  Operation,
-  SwitchButton,
+  Calendar,
+  ChatDotRound,
   Document,
   Location,
-  Calendar,
-  ChatDotRound
+  Operation,
+  Search,
+  Setting,
+  SwitchButton,
+  User
 } from '@element-plus/icons-vue'
 
 // 路由映射（不包含 profile，profile 特别处理）
@@ -156,8 +156,7 @@ const unreadCount = ref(0)
 
 const fetchUnreadCount = async () => {
   try {
-    const { data } = await api.get('/messages/unread-count')
-    unreadCount.value = data
+    unreadCount.value = await api.get('/messages/unread')
   } catch (e) {
     console.warn('未读消息获取失败', e)
   }

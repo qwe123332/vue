@@ -13,9 +13,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ChatDotRound } from '@element-plus/icons-vue'
+import {onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {ChatDotRound} from '@element-plus/icons-vue'
 import api from '@/services/api'
 
 const unreadCount = ref(0)
@@ -23,8 +23,7 @@ const router = useRouter()
 
 const fetchUnreadCount = async () => {
   try {
-    const { data } = await api.get('/messages/unread-count')
-    unreadCount.value = data
+    unreadCount.value = await api.get('/messages/unread-count')
   } catch (e) {
     console.warn('获取未读消息失败')
   }

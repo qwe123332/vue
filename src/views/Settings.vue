@@ -50,7 +50,7 @@ export default {
 
     const fetchUserInfo = async () => {
       try {
-        const { data } = await api.get('/users/profile')
+        const data = await api.get('/users/profile')
         userInfo.value = data
       } catch (error) {
         ElMessage.error('获取用户信息失败')

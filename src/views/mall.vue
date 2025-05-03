@@ -5,10 +5,10 @@
     <div class="search-filter-section">
       <div class="search-bar">
         <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Search products..."
-            @keyup.enter="handleSearch"
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search products..."
+          @keyup.enter="handleSearch"
         />
         <button @click="handleSearch">Search</button>
       </div>
@@ -40,46 +40,24 @@
 
       <div v-else class="products-grid">
         <div
-            v-for="product in products"
-            :key="product.id"
-            class="product-card"
+          v-for="product in products"
+          :key="product.productId"
+          class="product-card"
+          @click="viewProductDetails(product.productId)"
         >
           <div class="image-wrapper">
             <img
-                :src="product.image_url"
-                :alt="product.name"
-                class="product-image"
+              :src="product.imageUrl"
+              :alt="product.name"
+              class="product-image"
             />
             <div v-if="product.stock <= 0" class="out-of-stock">Out of Stock</div>
           </div>
           <div class="product-info">
             <h2 class="product-title">{{ product.name }}</h2>
+            <p class="product-description">{{ product.description }}</p>
             <div class="price-section">
               <span class="current-price">¥{{ product.price }}</span>
-              <span v-if="product.original_price" class="original-price">
-                ¥{{ product.original_price }}
-              </span>
-            </div>
-            <div class="product-meta">
-              <span class="sales">Sold: {{ product.sales }}</span>
-              <span class="stock" :class="{ 'low-stock': product.stock < 10 }">
-                Stock: {{ product.stock > 0 ? product.stock : 'Out of stock' }}
-              </span>
-            </div>
-            <div class="product-actions">
-              <button
-                  class="buy-btn"
-                  :disabled="product.stock <= 0"
-                  @click="addToCart(product)"
-              >
-                {{ product.stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
-              </button>
-              <button
-                  class="detail-btn"
-                  @click="viewProductDetails(product.id)"
-              >
-                Details
-              </button>
             </div>
           </div>
         </div>
@@ -97,6 +75,7 @@
 
 <script>
 import { throttle } from 'lodash-es';
+import api from '@/services/api';
 
 export default {
   name: "Mall",
@@ -117,6 +96,7 @@ export default {
   },
   mounted() {
     this.fetchProducts();
+    this.fetchCategories();
     window.addEventListener('scroll', this.handleScroll);
   },
   beforeDestroy() {
@@ -139,28 +119,34 @@ export default {
           limit: 20
         };
 
-        const response = await fetch(`/api/products?${new URLSearchParams(params)}`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const { items, meta } = await response.json();
+        const items = await api.get('/mall/products', { params }); // ✅ 直接拿到 data
 
         if (this.currentPage === 1) {
           this.products = items;
-          this.categories = meta.categories || [];
         } else {
           this.products = [...this.products, ...items];
         }
 
-        this.totalPages = meta.total_pages;
-        this.hasMore = meta.has_more;
+        this.hasMore = items.length > 0;
         this.error = null;
       } catch (err) {
-        console.error('API Error:', err);
-        this.error = 'Failed to load products. Please try again later.';
+        console.error('Error fetching products:', err);
+        this.error = err.message || 'Failed to load products. Please try again later.';
         if (this.currentPage > 1) this.currentPage--;
       } finally {
         this.initialLoading = false;
         this.loadingMore = false;
+      }
+    },
+
+
+    async fetchCategories() {
+      try {
+        const rawCategories = await api.get('/categories');
+        this.categories = rawCategories.map(category => category.name); // 提取分类名称
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        this.error = err.message || 'Failed to load categories. Please try again later.';
       }
     },
 
@@ -193,25 +179,6 @@ export default {
 
     viewProductDetails(id) {
       this.$router.push(`/products/${id}`);
-    },
-
-    async addToCart(product) {
-      try {
-        const response = await fetch('/api/cart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product_id: product.id,
-            quantity: 1
-          })
-        });
-
-        if (!response.ok) throw new Error('Failed to add to cart');
-        alert('Product added to cart!');
-      } catch (error) {
-        console.error('Cart Error:', error);
-        alert('Failed to add to cart. Please try again.');
-      }
     }
   }
 };
@@ -295,6 +262,7 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .product-card:hover {
@@ -345,6 +313,12 @@ export default {
   line-height: 1.3;
 }
 
+.product-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 12px;
+}
+
 .price-section {
   margin-bottom: 15px;
 }
@@ -377,30 +351,11 @@ export default {
 
 .product-actions {
   display: flex;
-  gap: 10px;
-}
-
-.buy-btn {
-  flex: 1;
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.buy-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.buy-btn:not(:disabled):hover {
-  opacity: 0.9;
+  justify-content: center;
 }
 
 .detail-btn {
+  width: 100%;
   background: #007bff;
   color: white;
   border: none;
@@ -408,6 +363,7 @@ export default {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
+  font-weight: bold;
 }
 
 .detail-btn:hover {

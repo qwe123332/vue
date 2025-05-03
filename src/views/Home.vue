@@ -308,7 +308,7 @@ export default {
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
           const url = useCustomUrl ? endpoint : `/${endpoint}`;
-          const { data } = await api.get(url, {
+          const  data  = await api.get(url, {
             params,
             headers: getAuthHeader(),
           });

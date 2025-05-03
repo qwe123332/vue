@@ -177,7 +177,7 @@ export default {
     // 获取帖子详情
     const fetchPost = async () => {
       try {
-        const { data } = await api.get(`/posts/${route.params.id}`);
+        const  data  = await api.get(`/posts/${route.params.id}`);
         post.value = data;
         console.log(post.value);
       } catch (error) {
@@ -189,7 +189,7 @@ export default {
     // 获取评论列表
     const fetchComments = async (page = 1) => {
       try {
-        const { data } = await api.get(
+        const  data  = await api.get(
           `/social/posts/${route.params.id}/comments`,
           { params: { page: page - 1, size: pageSize.value } }
         );
@@ -208,13 +208,11 @@ export default {
         return;
       }
       try {
-        console.log(post.value);
         if (post.value.liked) {
-          console.log(post.valued);
-          await api.delete(`/posts/${post.value.postId}/like`);
+          await api.delete(`/posts/${post.value.id}/like`);
           post.value.likeCount--;
         } else {
-          await api.post(`/posts/${post.value.postId}/like`);
+          await api.post(`/posts/${post.value.id}/like`);
           post.value.likeCount++;
         }
         post.value.liked = !post.value.liked;
@@ -230,13 +228,14 @@ export default {
         });
         await api.delete(`/posts/${post.value.id}`);
         ElMessage.success("删除成功");
-        router.push("/posts");
+        router.push("/posts"); // 删除后跳转
       } catch (error) {
         if (error !== "cancel") {
           ElMessage.error("删除失败");
         }
       }
     };
+
 
     const editPost = () => {
       router.push(`/posts/${post.value.id}/edit`);
@@ -252,11 +251,13 @@ export default {
     };
     const openReportDialog = () => {
       if (!store.state.user) {
+        ElMessage.warning("请先登录！");
         router.push("/login");
         return;
       }
       reportDialogVisible.value = true;
     };
+
     const submitReport = async () => {
       try {
         if (!reportReason.value.trim()) {
@@ -266,7 +267,7 @@ export default {
 
         await api.post("/posts/report", {
           postId: post.value.id,
-          reason: reportReason.value
+          reason: reportReason.value,
         });
 
         ElMessage.success("举报成功，感谢反馈！");

@@ -38,7 +38,7 @@ export default createStore({
     },
     
     async login({ commit, dispatch }, credentials) {
-      const { data } = await api.post('/auth/login', credentials);
+      const  data  = await api.post('/auth/login', credentials);
       
       // 存储token和过期时间
       localStorage.setItem('token', data.token);
@@ -69,7 +69,7 @@ export default createStore({
         // 获取用户资料
         console.log("开始获取用户资料");
         const token = localStorage.getItem('token');
-        const { data } = await api.get('/users/profile');
+        const  data  = await api.get('/users/profile');
         console.log("打印USERINFO", data);
         
         if (data.roles && data.roles.length > 0) {
@@ -95,14 +95,14 @@ export default createStore({
     async fetchPosts({ commit, dispatch }, { page = 0, size = 10 } = {}) {
       if (!dispatch('checkTokenExpiration')) return;
       
-      const { data } = await api.get('/posts', { params: { page, size } });
+      const  data  = await api.get('/posts', { params: { page, size } });
       commit('SET_POSTS', data);
     },
     
     async fetchNotifications({ commit, dispatch }) {
       if (!dispatch('checkTokenExpiration')) return;
       
-      const { data } = await api.get('/notifications');
+      const  data  = await api.get('/notifications');
       commit('SET_NOTIFICATIONS', data);
       const { data: unreadCount } = await api.get('/notifications/unread-count');
       commit('SET_UNREAD_COUNT', unreadCount);

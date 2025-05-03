@@ -166,7 +166,7 @@ export default {
       loading.value = true
 
       try {
-        const response = await api.get('/search', {
+        const data = await api.get('/search', {
           params: {
             keyword: keyword.value,
             type: activeTab.value,
@@ -175,7 +175,7 @@ export default {
           }
         })
 
-        console.log('搜索结果：', response.data)
+        console.log('搜索结果：', data)
 
         // 确保当前关键词与搜索时的关键词一致，避免结果错乱
         if (keyword.value !== lastSearchKeyword.value) {
@@ -183,15 +183,15 @@ export default {
           return
         }
 
-        if (response.data.code === 200) {
+        if (data.code === 200) {
           // 保存完整响应数据
-          responseData.value = response.data
+          responseData.value = data
 
           // 计算总数
-          const data = response.data.data
-          total.value = calculateTotal(data, activeTab.value)
+          const resData = data.data
+          total.value = calculateTotal(resData, activeTab.value)
         } else {
-          throw new Error(response.data.message || '搜索失败')
+          throw new Error(data.message || '搜索失败')
         }
       } catch (error) {
         console.error('搜索失败：', error)
@@ -205,6 +205,7 @@ export default {
         loading.value = false
       }
     }
+
 
     const handleTabChange = () => {
       // 切换标签页时重置页码，但保留关键词
